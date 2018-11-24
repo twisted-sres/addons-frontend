@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+
+const reactDocs = require('react-docgen');
+const globby = require('globby');
+
+const STORIES_DIR = path.join(__dirname, '..', 'stories');
+
+const createStory = ({ fqcn, name, docs }) => {
+  const { props } = docs;
+
+  const requiredPropNames = Object.keys(props)
+    .filter((propName) => props[propName].required);
+
+  const withStore = requiredPropNames.includes('store')
+    || requiredPropNames.includes('setUIState');
+
+  const withI18n = requiredPropNames.includes('i18n');
+
+  const requiredProps = requiredPropNames
+    .filter((propName) => !['i18n', 'store'].includes(propName))
+    .map((propName) => {
+      const prop = props[propName];
+      const type = prop.flowType || prop.type;
+
+      if (propName === 'children') {
+        return `${propName}={"some children"}`;
+      }
+
+      switch (type.name) {
+        case 'function':
+        case 'signature':
+          return `${propName}={sinon.stub()}`;
+        case 'boolean':
+        case 'bool':
+          return `${propName}={false}`;
+        case 'number':
+          return `${propName}={123}`;
+        case 'any':
+        case 'string':
+          return `${propName}="Hello, World"`;
+        default:
+          return `${propName}={null}`;
+      }
+    })
+    .join(' ');
+
+  return `/* @flow */
+import React from 'react';
+import { storiesOf } from '@storybook/react';
+import { withInfo } from '@storybook/addon-info';
+${withStore ? `\nimport Provider from '../setup/Provider';` : ''}
+${withI18n ? `import { fakeI18n } from 'tests/unit/helpers';` : ''}
+
+import ${name} from '${fqcn}';
+
+storiesOf('${name}', module)${withStore ? '\n  .addDecorator((story) => <Provider story={story()} />)' : ''}
+  .add(
+    '${name} props',
+    withInfo()(() => {
+      return <${name} ${requiredProps}${withI18n && 'i18n={fakeI18n()}'} />;
+    }),
+  );`;
+};
+
+const writeStory = (componentFile) => {
+  const matches = /src\/(([a-z]+?)\/[a-z/]+?\/([a-zA-Z]+))\/index\.js$/.exec(
+    componentFile,
+  );
+
+  if (!matches) {
+    console.error('invalid component file:', componentFile);
+    return;
+  }
+
+  const fqcn = matches[1];
+  const package = matches[2];
+  const name = matches[3];
+
+  let source;
+
+  try {
+    source = fs.readFileSync(componentFile, 'utf8');
+    // This is a hack to avoid the "Multiple exported component definitions
+    // found" error.
+    source = source.replace(/export (const|class)/g, '$1');
+    const docs = reactDocs.parse(source);
+
+    const filename = path.join(STORIES_DIR, package, `${name}.js`);
+
+    if (fs.existsSync(filename)) {
+      console.info('a story alreadys exists for component file:', componentFile);
+      return;
+    }
+
+    fs.writeFileSync(filename, createStory({ fqcn, name, docs }), 'utf8');
+    console.info('[+] wrote ' + filename);
+  } catch (e) {
+    console.error(
+      'error while trying to create a story for component file:',
+      componentFile,
+    );
+    console.error(e);
+    console.error(source);
+  }
+};
+
+globby
+  .sync(path.join(__dirname, '..', 'src/ui/components/**/index.js'))
+  .forEach(writeStory);
