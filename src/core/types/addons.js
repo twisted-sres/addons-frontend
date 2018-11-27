@@ -88,6 +88,10 @@ export type ExternalAddonType = {|
   has_privacy_policy?: boolean,
   homepage?: string,
   icon_url?: string,
+  icons: {|
+    '32': string,
+    '64': string,
+  |},
   id: number,
   is_disabled?: boolean,
   is_experimental?: boolean,

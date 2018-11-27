@@ -207,6 +207,7 @@ export function createInternalAddon(
     has_privacy_policy: apiAddon.has_privacy_policy,
     homepage: apiAddon.homepage,
     icon_url: apiAddon.icon_url,
+    icons: apiAddon.icons,
     id: apiAddon.id,
     is_disabled: apiAddon.is_disabled,
     is_experimental: apiAddon.is_experimental,
