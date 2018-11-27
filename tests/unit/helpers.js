@@ -121,6 +121,10 @@ export const fakeAddon = Object.freeze({
   homepage: 'http://hamsterdance.com/',
   id: 1234,
   icon_url: 'https://addons.cdn.mozilla.net/webdev-64.png',
+  icons: {
+    32: 'https://addons.cdn.mozilla.net/webdev-32.png',
+    64: 'https://addons.cdn.mozilla.net/webdev-64.png',
+  },
   is_disabled: false,
   is_experimental: false,
   is_featured: false,

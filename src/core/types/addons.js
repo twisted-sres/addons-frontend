@@ -87,7 +87,7 @@ export type ExternalAddonType = {|
   has_eula?: boolean,
   has_privacy_policy?: boolean,
   homepage?: string,
-  icon_url?: string,
+  icon_url: string,
   icons: {|
     '32': string,
     '64': string,
@@ -101,7 +101,15 @@ export type ExternalAddonType = {|
   latest_unlisted_version?: ?ExternalAddonVersionType,
   locale_disambiguation?: string,
   name: string,
-  previews?: Array<Object>,
+  previews?: Array<{|
+    id: number,
+    // [width, height]
+    image_size: [number, number],
+    image_url: string,
+    // [width, height]
+    thumbnail_size: [number, number],
+    thumbnail_url: string,
+  |}>,
   public_stats?: boolean,
   ratings?: {|
     average: number,
