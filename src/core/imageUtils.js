@@ -3,14 +3,22 @@ import { isAllowedOrigin } from 'core/utils';
 import fallbackIcon from 'amo/img/icons/default-64.png';
 import type { AddonType } from 'core/types/addons';
 
-type ObjectWithIcons = {
+type ObjectWithIconURL = {
   icon_url: string,
 };
 
-export function getAddonIconUrl(addon: ?ObjectWithIcons): string {
-  return addon && isAllowedOrigin(addon.icon_url)
-    ? addon.icon_url
-    : fallbackIcon;
+type ObjectWithIcons = {
+  icons: $PropertyType<AddonType, 'icons'>,
+};
+
+type GetAddonIconUrlParam = ObjectWithIconURL | ObjectWithIcons;
+
+export function getAddonIconUrl(addon: ?GetAddonIconUrlParam): string {
+  if (addon && addon.icon_url && isAllowedOrigin(addon.icon_url)) {
+    return (addon: ObjectWithIconURL).icon_url;
+  }
+
+  return fallbackIcon;
 }
 
 type ObjectWithPreviews = {
